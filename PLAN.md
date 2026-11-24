@@ -90,11 +90,20 @@ Proves the pipeline. First real Rust.
 ## Phase 3: small window
 
 - Dep: `slint`, features `renderer-software` and `backend-winit`.
-- One `.slint` file. Two text lines: total capacity, used percent.
+- Design chosen 2026-11-24: option A "Pill" from https://claude.ai/artifact/8pdmxazNkzskWLc9qzDS5r
+  - 170x36 px, radius 8. One line: `12.2/31.9 GB` left, `38%` bold right. 3 px bar below in the accent color.
+  - Colors follow the OS theme via Slint `Palette` (light `#F3F3F3`/`#1B1B1B`, dark `#202020`/`#FFFFFF`). Accent fixed `#0078D4` for now; reading the real OS accent is a later extra.
+- One `.slint` file.
 - Frameless, always on top, fixed size, draggable.
 - Same 1s refresh via `slint::Timer`.
 - A checkbox for start at login, backed by the same `auto-launch` calls as the tray.
 - Done when window and tray show the same numbers.
+
+## Phase 3b: background transparency (optional, decision pending)
+
+- A setting to make the pill background see-through (text and bar stay solid). Off by default.
+- Needs `Window { background: transparent }` and a transparent winit window. Unverified with `renderer-software` on Windows; fallback is the Skia renderer, about 5 to 10 MB more RSS.
+- Gate: measure idle RSS with and without. Build only if the cost is acceptable. User decides after seeing the numbers.
 
 ## Phase 4: cross-platform check (later)
 
