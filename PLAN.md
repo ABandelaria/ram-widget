@@ -32,7 +32,7 @@ Rejected: Go (GUI needs cgo or webview, 40 MB+ idle), C++ (Qt is heavy, or three
 |-------|---------|-------|
 | `sysinfo` | total and used memory, all OS | 1 |
 | `tray-icon` | system tray icon, tooltip, menu | 2 |
-| `tao` | event loop; Windows tray needs a message pump | 2 |
+| ~~`tao`~~ | removed in Phase 3, Slint's winit loop pumps messages for the tray | 2 |
 | `auto-launch` | start at login; registry Run key, LaunchAgent, XDG autostart | 2b |
 | `slint` | small window; software renderer, winit backend | 3 |
 
@@ -96,7 +96,8 @@ Proves the pipeline. First real Rust.
 - One `.slint` file.
 - Frameless, always on top, fixed size, draggable.
 - Same 1s refresh via `slint::Timer`.
-- A checkbox for start at login, backed by the same `auto-launch` calls as the tray.
+- Start at login stays in the tray menu only. The 170x36 pill has no room for a checkbox.
+- Done 2026-11-25. Slint owns the event loop, `tao` removed. Menu events hop onto the Slint loop via `upgrade_in_event_loop`. Tray menu: Show widget, Start at login, Quit.
 - Done when window and tray show the same numbers.
 
 ## Phase 3b: background transparency (optional, decision pending)
@@ -107,7 +108,7 @@ Proves the pipeline. First real Rust.
 
 ## Phase 4: cross-platform check (later)
 
-- Native Linux build in WSL: `cargo build`. Tray needs `libgtk-3-dev` and `libxdo-dev` to link (installed 2026-11-24), and `libayatana-appindicator3-1` at runtime or it panics on start. WSLg has no tray host, so Linux tray testing needs a real desktop.
+- Native Linux build in WSL: `cargo build`. Tray needs `libgtk-3-dev` and `libxdo-dev` to link (installed 2026-11-24), (no longer needed since Phase 3: Linux tray uses the `ksni` backend, pure D-Bus). Runtime needs `libxkbcommon-x11-0`; winit was built X11-only, so WSLg Wayland alone does not work. WSLg has no tray host, so Linux tray testing needs a real desktop.
 - macOS needs a Mac. No code change expected for the memory part.
 - Per-distro packaging (deb, AUR, rpm) is out of scope until the app is stable.
 
