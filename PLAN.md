@@ -107,7 +107,7 @@ Proves the pipeline. First real Rust.
 
 ## Phase 4: cross-platform check (later)
 
-- Native Linux build in WSL: `cargo build`. Tray needs `libgtk-3-dev` and `libxdo-dev` on Linux.
+- Native Linux build in WSL: `cargo build`. Tray needs `libgtk-3-dev` and `libxdo-dev` to link (installed 2026-11-24), and `libayatana-appindicator3-1` at runtime or it panics on start. WSLg has no tray host, so Linux tray testing needs a real desktop.
 - macOS needs a Mac. No code change expected for the memory part.
 - Per-distro packaging (deb, AUR, rpm) is out of scope until the app is stable.
 
