@@ -53,6 +53,7 @@ egui/eframe skipped: fastest to write, but the GPU context costs 30 to 50 MB. Ad
 
 6. `cargo build --target x86_64-pc-windows-gnu`
 7. Run `./target/x86_64-pc-windows-gnu/debug/ram-widget.exe`. Hello world must appear.
+   - **Blocked on this laptop (2026-11-24).** CrowdStrike Falcon blocks and quarantines any unsigned exe on first run, from the WSL path and from `C:\Users\...\Temp` alike. Build works, run does not. Until IT grants an exclusion or a personal Windows machine is used, develop and run the native Linux build (`cargo build`, `./target/debug/ram-widget`) and keep the Windows cross-build compiling.
 8. `git init`, first commit.
 
 ## Phase 1: CLI
@@ -108,6 +109,8 @@ Proves the pipeline. First real Rust.
 - Measure RSS after each GUI phase. If a phase pushes idle RSS over 20 MB, stop and find out why before adding more.
 
 ## Open risks
+
+- Windows run target blocked by CrowdStrike on the work laptop. Phase 1 and later verify on Linux first. Task Manager comparison waits for a machine that can run the exe.
 
 - `windows-gnu` target can hit linker issues in crates that assume MSVC. Fallback: `cargo-xwin`.
 - Slint software renderer under `windows-gnu` not verified yet.
