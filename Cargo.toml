@@ -5,6 +5,12 @@ edition = "2024"
 
 [dependencies]
 auto-launch = "0.6.0"
+slint = { version = "1.19.1", default-features = false, features = ["std", "compat-1-2", "backend-winit", "renderer-software"] }
 sysinfo = "0.40.4"
-tao = "0.37.3"
-tray-icon = "0.26.1"
+tray-icon = { version = "0.26.1", default-features = false }
+
+[build-dependencies]
+slint-build = "1.19.1"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+tray-icon = { version = "0.26.1", default-features = false, features = ["ksni"] }
