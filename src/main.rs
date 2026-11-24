@@ -4,7 +4,8 @@ use std::{thread, time::Duration};
 use sysinfo::System;
 use tao::event::Event;
 use tao::event_loop::{ControlFlow, EventLoopBuilder};
-use tray_icon::menu::{Menu, MenuEvent, MenuItem};
+use auto_launch::AutoLaunchBuilder;
+use tray_icon::menu::{CheckMenuItem, Menu, MenuEvent, MenuItem};
 use tray_icon::{Icon, TrayIconBuilder};
 
 const GB: f64 = 1024.0 * 1024.0 * 1024.0;
@@ -46,9 +47,21 @@ fn main() {
         }
     });
 
-    let menu = Menu::new();
+    let exe = std::env::current_exe().expect("own exe path");
+    let autostart = AutoLaunchBuilder::new()
+        .set_app_name("ram-widget")
+        .set_app_path(&exe.to_string_lossy())
+        .build()
+        .expect("autostart config");
+    let login = CheckMenuItem::new(
+        "Start at login",
+        true,
+        autostart.is_enabled().unwrap_or(false),
+        None,
+    );
     let quit = MenuItem::new("Quit", true, None);
-    menu.append(&quit).expect("append Quit");
+    let menu = Menu::new();
+    menu.append_items(&[&login, &quit]).expect("build menu");
 
     let tray = TrayIconBuilder::new()
         .with_menu(Box::new(menu))
@@ -65,6 +78,14 @@ fn main() {
             }
             Event::UserEvent(UserEvent::Menu(e)) if e.id == quit.id() => {
                 *control_flow = ControlFlow::Exit;
+            }
+            Event::UserEvent(UserEvent::Menu(e)) if e.id == login.id() => {
+                // the menu already flipped the check; apply it, revert on failure
+                let want = login.is_checked();
+                let done = if want { autostart.enable() } else { autostart.disable() };
+                if done.is_err() {
+                    login.set_checked(!want);
+                }
             }
             _ => {}
         }
