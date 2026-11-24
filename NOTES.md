@@ -38,3 +38,19 @@ Beyond the profile:
 
 Try the profile change first, rebuild, compare the exe size and idle RSS, then
 decide.
+
+## Always on top as a tray toggle (2026-11-25)
+
+The pill is pinned above every other window, hard-coded in `ui/main.slint` as
+`always-on-top: true`. Make it a check item in the tray menu, like Start at login.
+
+- `ui/main.slint`: add `in property <bool> on-top: true;` and set
+  `always-on-top: root.on-top;`.
+- `src/main.rs`: add `CheckMenuItem::new("Always on top", true, true, None)` and flip
+  `ui.set_on_top(!ui.get_on_top())` in the menu handler, same `upgrade_in_event_loop`
+  hop as the other items.
+- Remember the choice across restarts, otherwise it resets to on every launch. A one
+  line settings file next to the exe or in the user config dir. Not needed for the
+  first cut.
+- Check that Slint applies the change at runtime on Windows. Winit supports changing
+  the window level after creation, so it should.
