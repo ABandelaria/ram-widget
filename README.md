@@ -19,7 +19,10 @@ Early. Builds for Windows and Linux. Not yet verified live on Windows, see
 
 ## Install
 
-There are no releases yet. Build from source (below), then run the executable:
+Windows: download `ram-widget.exe` from the [latest release](https://github.com/ABandelaria/ram-widget/releases) and run it.
+It is not code-signed yet, so SmartScreen will warn on first run.
+
+Or build from source (below), then run the executable:
 
 - Windows: `target\x86_64-pc-windows-gnu\release\ram-widget.exe`
 - Linux: `target/release/ram-widget`
