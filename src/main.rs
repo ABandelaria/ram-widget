@@ -25,7 +25,37 @@ fn icon() -> Icon {
     Icon::from_rgba(rgba, 16, 16).expect("icon buffer is 16x16 RGBA")
 }
 
+#[cfg(windows)]
+fn windows_setup() -> bool {
+    use windows_sys::Win32::Foundation::{ERROR_ALREADY_EXISTS, GetLastError};
+    use windows_sys::Win32::System::Threading::CreateMutexW;
+    use windows_sys::Win32::UI::WindowsAndMessaging::{MB_ICONERROR, MessageBoxW};
+    use windows_sys::w;
+
+    // the exe has no console in release, so show panics in a box instead of dying silently
+    #[cfg(not(debug_assertions))]
+    std::panic::set_hook(Box::new(|info| {
+        let msg: Vec<u16> = info.to_string().encode_utf16().chain([0]).collect();
+        unsafe { MessageBoxW(std::ptr::null_mut(), msg.as_ptr(), w!("RAM widget"), MB_ICONERROR) };
+    }));
+
+    // one widget per session: the mutex handle is leaked on purpose and dies with the process
+    unsafe {
+        CreateMutexW(std::ptr::null(), 0, w!("ram-widget"));
+        if GetLastError() == ERROR_ALREADY_EXISTS {
+            MessageBoxW(std::ptr::null_mut(), w!("RAM widget is already running. Look in the tray."), w!("RAM widget"), MB_ICONERROR);
+            return false;
+        }
+    }
+    true
+}
+
 fn main() {
+    #[cfg(windows)]
+    if !windows_setup() {
+        return;
+    }
+
     let ui = Main::new().expect("create window");
 
     let weak = ui.as_weak();
@@ -38,12 +68,19 @@ fn main() {
     });
 
     let exe = std::env::current_exe().expect("own exe path");
+    let exe = exe.to_string_lossy();
+    // auto-launch writes the Run key value unquoted, so a space in the path would split it
+    let exe = if cfg!(windows) { format!("\"{exe}\"") } else { exe.into_owned() };
     let autostart = AutoLaunchBuilder::new()
         .set_app_name("ram-widget")
-        .set_app_path(&exe.to_string_lossy())
+        .set_app_path(&exe)
         .set_args(&[MINIMIZED])
         .build()
         .expect("autostart config");
+    // the stored path goes stale when the exe is moved, so point it at the running exe
+    if autostart.is_enabled().unwrap_or(false) {
+        let _ = autostart.enable();
+    }
     let minimized = std::env::args().any(|a| a == MINIMIZED);
 
     let show = CheckMenuItem::new("Show widget", true, !minimized, None);
@@ -85,10 +122,15 @@ fn main() {
     let mut sys = System::new().expect("sysinfo: unsupported platform");
     let weak = ui.as_weak();
     let timer = Timer::default();
+    let mut last_tip = String::new();
     timer.start(TimerMode::Repeated, Duration::from_secs(1), move || {
         sys.refresh_memory();
         let (text, pct) = stats(sys.used_memory(), sys.total_memory());
-        let _ = tray.set_tooltip(Some(format!("{text}  {pct}%")));
+        let tip = format!("{text}  {pct}%");
+        if tip != last_tip {
+            let _ = tray.set_tooltip(Some(&tip));
+            last_tip = tip;
+        }
         if let Some(ui) = weak.upgrade() {
             ui.set_text(text.into());
             ui.set_percent(pct);
